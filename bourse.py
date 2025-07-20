@@ -174,4 +174,6 @@ Performancemoyenne10ans_df = Performancemoyenne10ans.reset_index().rename(column
 KPI = KPI.merge(Performancemoyenne10ans_df, on='Ticker', how='left')
 print(KPI)
 
-KPI.to_csv("resultats_bourse.csv", index=False, encoding="utf-8")
+from datetime import datetime
+date_str = datetime.now().strftime("%Y-%m-%d")
+KPI.to_csv(f"resultats_bourse_{date_str}.csv", index=False, encoding="utf-8")
