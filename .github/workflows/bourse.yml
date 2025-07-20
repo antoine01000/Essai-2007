@@ -23,7 +23,7 @@ jobs:
 
       - name: Run script
         run: |
-          python bourse_meilleure_version(1).py
+          python bourse.py
 
       - name: Commit results
         run: |
