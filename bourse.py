@@ -174,6 +174,64 @@ Performancemoyenne10ans_df = Performancemoyenne10ans.reset_index().rename(column
 KPI = KPI.merge(Performancemoyenne10ans_df, on='Ticker', how='left')
 print(KPI)
 
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+
+# Mapping GuruFocus dans gurufocus le ticker n'est pas le même
+gf_mapping = {
+    "NEM.DE": "NEMTF",
+}
+
+def scraper_metrics(ticker):
+    gf_ticker = gf_mapping.get(ticker, ticker) # Modified to use gf_mapping
+    url = f"https://www.gurufocus.com/stock/{gf_ticker}/summary"
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    response = requests.get(url, headers=headers)
+    results = {
+        "Ticker": ticker,
+        "ROIC %": None,
+        "FCF Margin %": None,
+        "Gross Margin %": None
+    }
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        for tag in soup.find_all(['div', 'span']):
+            text = tag.get_text(strip=True)
+
+            for kpi in ["ROIC %", "FCF Margin %", "Gross Margin %"]:
+                if kpi in text and results[kpi] is None:
+                    pattern = re.escape(kpi) + r'\s*([0-9]+(?:\.[0-9]+)?)'
+                    match = re.search(pattern, text)
+                    if match:
+                        results[kpi] = match.group(1)  # Sans le '%'
+
+            if all(results.values()):
+                break
+
+    return results
+
+
+# Exemple : appliquer sur ta liste de tickers déjà dans KPI
+tickers = KPI["Ticker"].tolist()  # Ta liste réelle de tickers
+
+# Scraper et créer le DataFrame
+data_scraped = []
+for ticker in tickers:
+    data_scraped.append(scraper_metrics(ticker))
+
+df_metrics = pd.DataFrame(data_scraped)
+
+# Fusion avec ton DataFrame KPI existant
+KPI = KPI.merge(df_metrics, on="Ticker", how='left')
+
+# Affichage
+print(KPI)
+
 from datetime import datetime
 date_str = datetime.now().strftime("%Y-%m-%d")
 KPI.to_csv(f"resultats_bourse_{date_str}.csv", index=False, encoding="utf-8")
