@@ -18,8 +18,8 @@ jobs:
           python-version: '3.11'
 
       - name: Install requirements
-        run: |
-          pip install requests pandas yfinance
+       run: |
+        pip install requests pandas yfinance lxml
 
       - name: Run script
         run: |
